@@ -17,14 +17,14 @@ try {
     console.log('⚠️  No Ollama config found. Run `ollama login` to authenticate.');
 }
 
-const OLLAMA_URL = process.env.OLLAMA_URL || ollamaConfig.api_url || 'https://ollama.com';
+const OLLAMA_URL = process.env.OLLAMA_URL || ollamaConfig.api_url || 'http://localhost:11434';
 const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || ollamaConfig.api_key || null;
 const MODEL = process.env.OLLAMA_MODEL || 'gpt-oss:20b-cloud';
 
 console.log(`🔧 Ollama Configuration:`);
 console.log(`   URL: ${OLLAMA_URL}`);
 console.log(`   Model: ${MODEL}`);
-console.log(`   Authenticated: ${OLLAMA_API_KEY ? '✓ Yes' : '✗ Run ollama login'}`);
+console.log(`   Using local Ollama server (authenticated via ollama signin)`);
 
 const dbPath = path.join(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
@@ -173,14 +173,12 @@ Remember: You're helping people discover and appreciate Southeast Texas heritage
                 }
             ];
 
-            // Prepare headers (include Authorization if API key is provided)
+            // Prepare headers
             const headers = {
                 'Content-Type': 'application/json'
             };
 
-            if (OLLAMA_API_KEY) {
-                headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
-            }
+            // No auth header needed for local Ollama server
 
             // Configure proxy if needed
             const axiosConfig = { headers };
