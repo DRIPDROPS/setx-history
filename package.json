@@ -1,0 +1,17 @@
+{
+  "name": "setx-history",
+  "version": "1.0.0",
+  "description": "Southeast Texas History Chat Agent",
+  "main": "api-server.js",
+  "scripts": {
+    "start": "node api-server.js",
+    "init": "node history-database.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "https-proxy-agent": "^7.0.2",
+    "sqlite3": "^5.1.6"
+  }
+}
