@@ -16,6 +16,9 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'history.html'));
 });
 
+// Serve static files (images, etc.)
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
+
 const dbPath = path.join(__dirname, 'database.sqlite');
 const db = new sqlite3.Database(dbPath);
 

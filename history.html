@@ -216,6 +216,32 @@
             font-size: 1.1rem;
         }
 
+        /* Historical gallery */
+        .historical-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .historical-gallery img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .historical-gallery img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        }
+
         .suggestion-chips {
             display: flex;
             flex-wrap: wrap;
@@ -399,6 +425,13 @@
                 <div class="welcome-screen">
                     <h2>👋 Welcome to Southeast Texas History!</h2>
                     <p>I'm your local history guide. Ask me anything about the Golden Triangle region's rich heritage!</p>
+
+                    <div class="historical-gallery">
+                        <img src="/images/historical/spindletop-lucas-gusher-1901.jpg" alt="Lucas Gusher at Spindletop, 1901" onclick="askQuestion('Tell me about the Spindletop oil discovery')">
+                        <img src="/images/historical/queen-of-waco-gusher-1901.jpg" alt="Queen of Waco Gusher, 1901" onclick="askQuestion('Tell me about the oil boom in Beaumont')">
+                        <img src="/images/historical/port-arthur-refinery.jpg" alt="Port Arthur Refinery" onclick="askQuestion('Tell me about Port Arthur refineries')">
+                        <img src="/images/historical/oil-well-drilling.jpg" alt="Oil Well Drilling" onclick="askQuestion('How did they drill for oil in the early 1900s?')">
+                    </div>
 
                     <div class="suggestion-chips">
                         <div class="chip" onclick="askQuestion('Tell me about the Spindletop oil discovery')">

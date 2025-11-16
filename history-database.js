@@ -258,7 +258,8 @@ async function seedHistoricalData() {
                                                 city_id: beaumont?.id,
                                                 topic_id: oilTopic?.id,
                                                 source: 'Texas State Historical Association',
-                                                importance: 10
+                                                importance: 10,
+                                                image_url: '/images/historical/spindletop-lucas-gusher-1901.jpg'
                                             },
                                             {
                                                 title: 'Beaumont Population Explosion',
@@ -268,7 +269,8 @@ async function seedHistoricalData() {
                                                 city_id: beaumont?.id,
                                                 topic_id: oilTopic?.id,
                                                 source: 'Spindletop Museum',
-                                                importance: 8
+                                                importance: 8,
+                                                image_url: '/images/historical/queen-of-waco-gusher-1901.jpg'
                                             },
                                             {
                                                 title: 'Port Arthur Refineries Established',
@@ -278,7 +280,8 @@ async function seedHistoricalData() {
                                                 city_id: portArthur?.id,
                                                 topic_id: oilTopic?.id,
                                                 source: 'Texas State Historical Association',
-                                                importance: 9
+                                                importance: 9,
+                                                image_url: '/images/historical/port-arthur-refinery.jpg'
                                             },
                                             {
                                                 title: 'Orange Lumber Industry Peak',
@@ -323,8 +326,8 @@ async function seedHistoricalData() {
                                         ];
 
                                         const factStmt = db.prepare(`
-                                            INSERT INTO historical_facts (title, content, event_date, event_year, city_id, topic_id, source_name, importance, is_verified)
-                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+                                            INSERT INTO historical_facts (title, content, event_date, event_year, city_id, topic_id, source_name, importance, is_verified, image_url)
+                                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
                                         `);
 
                                         facts.forEach(fact => {
@@ -336,7 +339,8 @@ async function seedHistoricalData() {
                                                 fact.city_id,
                                                 fact.topic_id,
                                                 fact.source,
-                                                fact.importance
+                                                fact.importance,
+                                                fact.image_url || null
                                             );
                                         });
 
