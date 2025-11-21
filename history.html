@@ -87,11 +87,24 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
         }
 
         .topic-item:hover, .city-item:hover {
             background: #e9ecef;
             transform: translateX(5px);
+        }
+
+        .topic-item .research-badge {
+            position: absolute;
+            right: 0.5rem;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .topic-item:hover .research-badge {
+            opacity: 1;
         }
 
         .topic-icon {
@@ -379,7 +392,8 @@
             }
         }
 
-        /* Scrollbar */
+
+         /* Scrollbar */
         .chat-messages::-webkit-scrollbar, .sidebar::-webkit-scrollbar {
             width: 8px;
         }
@@ -400,6 +414,7 @@
         <ul>
             <li><span class="logo">🏛️ SETX History</span></li>
             <li><a href="/">History Chat</a></li>
+            <li><a href="/contribute.html">🤝 Contribute</a></li>
         </ul>
     </nav>
 
@@ -478,7 +493,9 @@
         </div>
     </div>
 
-    <script>
+
+     <script>
+        console.log('history.html loaded');
         const API_BASE = 'http://localhost:3002';
         let conversationId = null;
         let sessionId = generateSessionId();
@@ -519,14 +536,75 @@
                 const topics = await response.json();
 
                 const topicsList = document.getElementById('topics-list');
-                topicsList.innerHTML = topics.map(topic => `
-                    <div class="topic-item" onclick="askAboutTopic('${topic.name}')">
-                        <span class="topic-icon">${topic.icon}</span>
-                        <span>${topic.name}</span>
-                    </div>
-                `).join('');
+                
+                // Check which topics have pages and load them
+                const topicsWithPages = await Promise.all(
+                    topics.map(async (topic) => {
+                        try {
+                            const pageResponse = await fetch(`${API_BASE}/api/topic/${encodeURIComponent(topic.name)}/presentation`);
+                            const pageData = await pageResponse.json();
+                            return { ...topic, pageUrl: pageData.url, hasPage: pageData.exists };
+                        } catch (e) {
+                            return { ...topic, hasPage: false };
+                        }
+                    })
+                );
+                
+                topicsList.innerHTML = topicsWithPages.map(topic => {
+                    if (topic.hasPage) {
+                        // Topic has a page - link to it
+                        return `
+                            <div class="topic-item" onclick="window.location.href='${topic.pageUrl}'">
+                                <span class="topic-icon">${topic.icon}</span>
+                                <span>${topic.name}</span>
+                                <span class="research-badge" title="View page">📄</span>
+                            </div>
+                        `;
+                    } else {
+                        // Topic needs research - trigger it
+                        return `
+                            <div class="topic-item" onclick="triggerResearch('${topic.name}')">
+                                <span class="topic-icon">${topic.icon}</span>
+                                <span>${topic.name}</span>
+                                <span class="research-badge" title="Click to create page for this topic">🔬</span>
+                            </div>
+                        `;
+                    }
+                }).join('');
             } catch (error) {
                 console.error('Error loading topics:', error);
+            }
+        }
+
+        // Trigger research workflow to create a permanent page for a topic
+        async function triggerResearch(topic) {
+            console.log(`🔬 Creating page for: ${topic}`);
+
+            try {
+                const response = await fetch(`${API_BASE}/api/research`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic: topic })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Page created - redirect to it
+                    if (result.pageUrl) {
+                        window.location.href = result.pageUrl;
+                    } else {
+                        // Reload topics to show the new link
+                        await loadTopics();
+                        alert(`✅ Page created for ${topic}!`);
+                    }
+                } else {
+                    alert(`⚠️ Page creation failed: ${result.message}`);
+                    console.error('Research failed:', result);
+                }
+            } catch (error) {
+                console.error('Error creating page:', error);
+                alert('Error creating page. Please try again.');
             }
         }
 
@@ -641,9 +719,49 @@
         }
 
         function askQuestion(question) {
-            document.getElementById('chat-input').value = question;
-            sendMessage(question);
+            // Check if this is a request for a specific topic that might have a presentation
+            const researchTopics = ['spindletop', 'oil', 'beaumont', 'port arthur', 'orange', 'lumber', 'shipbuilding', 'cajun'];
+            const lowerQuestion = question.toLowerCase();
+            
+            // If this looks like a research request, use the research API
+            if ((lowerQuestion.includes('tell me about') || lowerQuestion.includes('how did')) && researchTopics.some(topic => lowerQuestion.includes(topic))) {
+                triggerResearchFromQuestion(question);
+            } else {
+                // Otherwise use the normal chat
+                document.getElementById('chat-input').value = question;
+                sendMessage(question);
+            }
         }
+        
+        // Special function to handle research requests
+        async function triggerResearchFromQuestion(question) {
+            console.log(`🔬 Research triggered from question: ${question}`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/research`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: question })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.pageUrl) {
+                    // Redirect to the existing presentation
+                    window.location.href = result.pageUrl;
+                } else {
+                    // Fall back to chat if research fails
+                    document.getElementById('chat-input').value = question;
+                    sendMessage(question);
+                }
+            } catch (error) {
+                console.error('Error triggering research:', error);
+                // Fall back to chat if research fails
+                document.getElementById('chat-input').value = question;
+                sendMessage(question);
+            }
+        }
+
 
         // Event listeners
         document.getElementById('chat-form').addEventListener('submit', (e) => {

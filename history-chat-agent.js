@@ -178,7 +178,10 @@ Remember: You're helping people discover and appreciate Southeast Texas heritage
                 'Content-Type': 'application/json'
             };
 
-            // No auth header needed for local Ollama server
+            // Add API key if provided (for Ollama cloud)
+            if (OLLAMA_API_KEY) {
+                headers['Authorization'] = `Bearer ${OLLAMA_API_KEY}`;
+            }
 
             // Configure proxy if needed
             const axiosConfig = { headers };

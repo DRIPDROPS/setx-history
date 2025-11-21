@@ -16,7 +16,16 @@ Visit http://localhost:3002
 - Chat with AI historian about Southeast Texas
 - Database of historical facts, cities, topics, and periods
 - Learning system that captures new historical insights from conversations
+- Automatic website population: Research workflow collects media and facts to populate the website
 - Ollama cloud API integration
+
+## How It Works
+
+The website automatically creates permanent pages through a research workflow:
+1. When a topic is researched, the system collects historical facts and media
+2. A permanent web page is generated for that topic (these ARE the website pages)
+3. The page displays historical facts, images, and content
+4. Topics with pages are linked from the main site; topics without pages can be researched to create them
 
 ## API Endpoints
 

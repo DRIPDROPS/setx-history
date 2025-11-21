@@ -5,7 +5,9 @@
   "main": "api-server.js",
   "scripts": {
     "start": "node api-server.js",
-    "init": "node history-database.js"
+    "init": "node history-database.js",
+    "populate": "node populate-all-topics.js",
+    "test": "node test.js"
   },
   "dependencies": {
     "axios": "^1.6.2",
@@ -13,6 +15,10 @@
     "dotenv": "^16.3.1",
     "express": "^5.1.0",
     "https-proxy-agent": "^7.0.2",
+    "playwright": "^1.56.1",
     "sqlite3": "^5.1.6"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
   }
 }

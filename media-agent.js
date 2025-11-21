@@ -19,29 +19,141 @@ class MediaAgent {
     }
 
     /**
-     * Search Library of Congress for historical images
+     * Search Library of Congress for historical media (images, audio, video)
+     * Always credits Library of Congress as the source
      */
-    async searchLibraryOfCongress(query, maxResults = 5) {
+    async searchLibraryOfCongress(query, maxResults = 10) {
         try {
-            // LOC API endpoint
-            const searchUrl = `https://www.loc.gov/pictures/search/?q=${encodeURIComponent(query)}&fo=json`;
-            const response = await axios.get(searchUrl);
-
-            const results = [];
-            if (response.data && response.data.results) {
-                for (const item of response.data.results.slice(0, maxResults)) {
-                    if (item.image_url) {
-                        results.push({
-                            title: item.title || query,
-                            url: item.image_url[0],
-                            source: 'Library of Congress',
-                            reproduction_number: item.reproduction_number
-                        });
+            const allMedia = [];
+            
+            // Search for images
+            const imageSearchUrl = `https://www.loc.gov/pictures/search/?q=${encodeURIComponent(query)}&fo=json`;
+            try {
+                const imageResponse = await axios.get(imageSearchUrl);
+                if (imageResponse.data && imageResponse.data.results) {
+                    for (const item of imageResponse.data.results.slice(0, maxResults)) {
+                        // For images, use the full image URL
+                        if (item.image && item.image.full) {
+                            allMedia.push({
+                                title: item.title || query,
+                                url: item.image.full,
+                                source: 'Library of Congress - Images',
+                                type: 'image',
+                                reproduction_number: item.reproduction_number
+                            });
+                        }
                     }
                 }
+            } catch (imgError) {
+                console.error('Error searching LOC images:', imgError.message);
+            }
+            
+            // Search for audio recordings
+            const audioSearchUrl = `https://www.loc.gov/audio/?q=${encodeURIComponent(query)}&fo=json`;
+            try {
+                const audioResponse = await axios.get(audioSearchUrl);
+                if (audioResponse.data && audioResponse.data.results) {
+                    for (const item of audioResponse.data.results.slice(0, Math.floor(maxResults/2))) {
+                        // For audio, check resources for media files
+                        if (item.resources) {
+                            // Look for audio resources more broadly
+                            const audioResource = item.resources.find(r => {
+                                if (!r.url) return false;
+                                // Check for common audio indicators
+                                const isAudio = r.mime_type && (
+                                    r.mime_type.includes('audio') || 
+                                    r.mime_type.includes('mp3') || 
+                                    r.mime_type.includes('wav') ||
+                                    r.mime_type.includes('aiff') ||
+                                    r.mime_type.includes('flac')
+                                );
+                                // Or check URL for audio file extensions
+                                const hasAudioExtension = r.url.match(/\.(mp3|wav|aiff|flac|aac|m4a|ogg)$/i);
+                                return isAudio || hasAudioExtension;
+                            });
+                            
+                            if (audioResource && audioResource.url) {
+                                allMedia.push({
+                                    title: item.title || query,
+                                    url: audioResource.url,
+                                    source: 'Library of Congress - Audio',
+                                    type: 'audio',
+                                    reproduction_number: item.reproduction_number
+                                });
+                            } else if (item.resources.length > 0 && item.resources[0].url) {
+                                // Fallback: use first resource if it exists
+                                const firstResource = item.resources[0];
+                                if (firstResource.url.match(/\.(mp3|wav|aiff|flac|aac|m4a|ogg)$/i)) {
+                                    allMedia.push({
+                                        title: item.title || query,
+                                        url: firstResource.url,
+                                        source: 'Library of Congress - Audio',
+                                        type: 'audio',
+                                        reproduction_number: item.reproduction_number
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (audioError) {
+                console.error('Error searching LOC audio:', audioError.message);
+            }
+            
+            // Search for video recordings
+            const videoSearchUrl = `https://www.loc.gov/film/?q=${encodeURIComponent(query)}&fo=json`;
+            try {
+                const videoResponse = await axios.get(videoSearchUrl);
+                if (videoResponse.data && videoResponse.data.results) {
+                    for (const item of videoResponse.data.results.slice(0, Math.floor(maxResults/2))) {
+                        // For video, check resources for media files
+                        if (item.resources) {
+                            // Look for video resources more broadly
+                            const videoResource = item.resources.find(r => {
+                                if (!r.url) return false;
+                                // Check for common video indicators
+                                const isVideo = r.mime_type && (
+                                    r.mime_type.includes('video') || 
+                                    r.mime_type.includes('mp4') || 
+                                    r.mime_type.includes('mov') ||
+                                    r.mime_type.includes('avi') ||
+                                    r.mime_type.includes('wmv') ||
+                                    r.mime_type.includes('flv')
+                                );
+                                // Or check URL for video file extensions
+                                const hasVideoExtension = r.url.match(/\.(mp4|mov|avi|wmv|flv|mkv|m4v)$/i);
+                                return isVideo || hasVideoExtension;
+                            });
+                            
+                            if (videoResource && videoResource.url) {
+                                allMedia.push({
+                                    title: item.title || query,
+                                    url: videoResource.url,
+                                    source: 'Library of Congress - Video',
+                                    type: 'video',
+                                    reproduction_number: item.reproduction_number
+                                });
+                            } else if (item.resources.length > 0 && item.resources[0].url) {
+                                // Fallback: use first resource if it exists
+                                const firstResource = item.resources[0];
+                                if (firstResource.url.match(/\.(mp4|mov|avi|wmv|flv|mkv|m4v)$/i)) {
+                                    allMedia.push({
+                                        title: item.title || query,
+                                        url: firstResource.url,
+                                        source: 'Library of Congress - Video',
+                                        type: 'video',
+                                        reproduction_number: item.reproduction_number
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (videoError) {
+                console.error('Error searching LOC video:', videoError.message);
             }
 
-            return results;
+            return allMedia.slice(0, maxResults);
         } catch (error) {
             console.error('Error searching LOC:', error.message);
             return [];
@@ -49,50 +161,89 @@ class MediaAgent {
     }
 
     /**
-     * Download image from URL
+     * Download media from URL (handles images, audio, video)
+     * Always preserves source attribution in filename
      */
-    async downloadImage(url, filename) {
+    async downloadMedia(url, filename, mediaType) {
         try {
-            const response = await axios.get(url, { responseType: 'arraybuffer' });
+            if (!url || !filename) {
+                throw new Error('URL and filename are required');
+            }
+            
+            // Determine file extension based on media type
+            let extension = '.jpg';
+            if (mediaType === 'audio') {
+                extension = '.mp3';
+            } else if (mediaType === 'video') {
+                extension = '.mp4';
+            }
+            
+            // Ensure filename has correct extension
+            if (!filename.endsWith(extension)) {
+                filename = filename.replace(/\.[^/.]+$/, "") + extension;
+            }
+            
+            const response = await axios.get(url, { 
+                responseType: 'arraybuffer',
+                timeout: 30000, // 30 second timeout
+                validateStatus: (status) => status === 200
+            });
+            
+            if (!response.data || response.data.length === 0) {
+                throw new Error('Empty response from media URL');
+            }
+            
             const filepath = path.join(this.imageDir, filename);
             fs.writeFileSync(filepath, response.data);
             console.log(`✅ Downloaded: ${filename}`);
             return filepath;
         } catch (error) {
             console.error(`❌ Failed to download ${filename}:`, error.message);
+            if (error.code === 'ECONNABORTED') {
+                console.error('   Request timed out');
+            } else if (error.response) {
+                console.error(`   HTTP ${error.response.status}: ${error.response.statusText}`);
+            }
             return null;
         }
     }
 
     /**
-     * Collect media for a topic
+     * Collect media for a topic (images, audio, video)
+     * Always credits sources and preserves media type information
      */
     async collectMediaForTopic(topic, keywords = []) {
         console.log(`\n📸 Media Agent: Collecting media for "${topic}"`);
-
+        
         // Build search query
         const searchQuery = [topic, ...keywords, 'Texas history'].join(' ');
-
-        // Search for images
-        const images = await this.searchLibraryOfCongress(searchQuery);
-
+        
+        // Search for all media types
+        const mediaItems = await this.searchLibraryOfCongress(searchQuery);
+        
         const downloadedMedia = [];
-
-        for (const image of images) {
-            const filename = `${topic.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.jpg`;
-            const filepath = await this.downloadImage(image.url, filename);
-
+        
+        for (const media of mediaItems) {
+            // Create filename that preserves source information
+            const cleanTitle = media.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').substring(0, 30);
+            const timestamp = Date.now();
+            const filename = `${topic.toLowerCase().replace(/\s+/g, '-')}-${cleanTitle}-${timestamp}`;
+            
+            const filepath = await this.downloadMedia(media.url, filename, media.type);
+            
             if (filepath) {
                 downloadedMedia.push({
-                    filepath: `/images/historical/${filename}`,
-                    title: image.title,
-                    source: image.source,
-                    topic: topic
+                    filepath: `/images/historical/${filename}.${media.type === 'audio' ? 'mp3' : media.type === 'video' ? 'mp4' : 'jpg'}`,
+                    title: media.title,
+                    source: media.source, // Always preserve source attribution
+                    type: media.type,
+                    topic: topic,
+                    reproduction_number: media.reproduction_number
                 });
             }
         }
-
-        console.log(`✅ Collected ${downloadedMedia.length} images for "${topic}"`);
+        
+        console.log(`✅ Collected ${downloadedMedia.length} media items for "${topic}" (${mediaItems.length} searched)`);
         return downloadedMedia;
     }
 

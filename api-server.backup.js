@@ -5,17 +5,9 @@ const cors = require('cors');
 const path = require('path');
 const { chatWithAgent } = require('./history-chat-agent');
 const { ResearchWorkflow } = require('./research-workflow');
-const { PageConsolidationAgent } = require('./page-consolidation-agent');
-const { initializeAllTables } = require('./history-database');
 
 const app = express();
 const PORT = 3002;  // Different port from events app
-
-// Initialize database tables
-initializeAllTables().catch(error => {
-    console.error('❌ Failed to initialize database tables:', error);
-    process.exit(1);
-});
 
 app.use(cors());
 app.use(express.json());
@@ -230,52 +222,6 @@ function createConversationHandler(req, res) {
 app.post('/api/conversation', createConversationHandler);
 app.post('/api/chat/conversation', createConversationHandler);
 
-// Check if consolidation should be triggered after research
-function checkAndTriggerConsolidation(topic) {
-    // Map topics to their main categories
-    const topicToCategory = {
-        'spindletop': 'Oil & Energy',
-        'oil': 'Oil & Energy',
-        'drilling': 'Oil & Energy',
-        'refinery': 'Oil & Energy',
-        'lumber': 'Lumber Industry',
-        'sawmill': 'Lumber Industry',
-        'shipbuilding': 'Shipbuilding',
-        'shipyard': 'Shipbuilding'
-    };
-    
-    // Find the main category for this topic
-    const lowerTopic = topic.toLowerCase();
-    let mainCategory = null;
-    
-    for (const [key, category] of Object.entries(topicToCategory)) {
-        if (lowerTopic.includes(key)) {
-            mainCategory = category;
-            break;
-        }
-    }
-    
-    // If we found a category, trigger consolidation (but don't wait for it)
-    if (mainCategory) {
-        console.log(`🔄 Scheduling consolidation for category: ${mainCategory}`);
-        setTimeout(() => {
-            const consolidator = new PageConsolidationAgent(dbPath);
-            consolidator.consolidateTopicCategory(mainCategory)
-                .then(result => {
-                    if (result) {
-                        console.log(`✅ Consolidation completed for ${mainCategory}`);
-                    }
-                })
-                .catch(error => {
-                    console.error(`❌ Consolidation failed for ${mainCategory}:`, error.message);
-                })
-                .finally(() => {
-                    consolidator.close();
-                });
-        }, 5000); // Wait 5 seconds to allow any pending database operations
-    }
-}
-
 // Trigger research workflow for a topic
 app.post('/api/research', async (req, res) => {
     const { topic, message } = req.body;
@@ -311,10 +257,6 @@ app.post('/api/research', async (req, res) => {
             if (existingPresentation) {
                 const filename = path.basename(existingPresentation.html_path);
                 console.log(`✅ Page already exists for "${searchTopic}".`);
-                
-                // After serving existing page, check if we should trigger consolidation
-                checkAndTriggerConsolidation(searchTopic);
-                
                 return res.json({
                     success: true,
                     topic: searchTopic,
@@ -332,9 +274,6 @@ app.post('/api/research', async (req, res) => {
             workflow.close();
 
             if (result) {
-                // After creating new presentation, check if we should trigger consolidation
-                checkAndTriggerConsolidation(result.topic);
-                
                 res.json({
                     success: true,
                     topicId: result.topicId,
@@ -354,58 +293,6 @@ app.post('/api/research', async (req, res) => {
         console.error('Research workflow error:', error);
         res.status(500).json({
             error: 'Research workflow failed',
-            details: error.message
-        });
-    }
-});
-
-// Manual consolidation endpoint
-app.post('/api/consolidate/:category', async (req, res) => {
-    const { category } = req.params;
-    
-    try {
-        const consolidator = new PageConsolidationAgent(dbPath);
-        const result = await consolidator.consolidateTopicCategory(category);
-        consolidator.close();
-        
-        if (result) {
-            res.json({
-                success: true,
-                message: `Consolidated category: ${category}`,
-                file: result.filename,
-                url: result.url
-            });
-        } else {
-            res.json({
-                success: false,
-                message: `No presentations found to consolidate for: ${category}`
-            });
-        }
-    } catch (error) {
-        console.error('Consolidation error:', error);
-        res.status(500).json({
-            error: 'Consolidation failed',
-            details: error.message
-        });
-    }
-});
-
-// Full consolidation endpoint
-app.post('/api/consolidate-all', async (req, res) => {
-    try {
-        const consolidator = new PageConsolidationAgent(dbPath);
-        const results = await consolidator.consolidateAllCategories();
-        consolidator.close();
-        
-        res.json({
-            success: true,
-            message: `Consolidated ${results.length} categories`,
-            results: results
-        });
-    } catch (error) {
-        console.error('Full consolidation error:', error);
-        res.status(500).json({
-            error: 'Full consolidation failed',
             details: error.message
         });
     }

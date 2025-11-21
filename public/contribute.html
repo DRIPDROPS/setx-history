@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contribute - SETX History</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            transition: opacity 0.3s;
+        }
+
+        .back-link:hover {
+            opacity: 0.8;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            color: #1e3c72;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .char-count {
+            text-align: right;
+            color: #666;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.4);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .success-message {
+            background: #4caf50;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .error-message {
+            background: #ff5252;
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .info-box {
+            background: #e8f0fe;
+            border-left: 4px solid #2a5298;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .info-box h3 {
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .required {
+            color: #ff5252;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to History Archive</a>
+
+        <header>
+            <h1>🤝 Contribute to History</h1>
+            <p>Share your knowledge and help preserve Southeast Texas heritage</p>
+        </header>
+
+        <div class="form-container">
+            <div class="info-box">
+                <h3>📝 Guidelines for Contributors</h3>
+                <p>We welcome contributions from the community! Please ensure your facts are accurate and include sources when possible. All submissions will be reviewed before being added to the archive.</p>
+            </div>
+
+            <div id="success-message" class="success-message"></div>
+            <div id="error-message" class="error-message"></div>
+
+            <form id="contribution-form">
+                <div class="form-group">
+                    <label for="topic">Topic <span class="required">*</span></label>
+                    <select id="topic" name="topic" required>
+                        <option value="">Select a topic...</option>
+                        <option value="Oil & Energy">Oil & Energy</option>
+                        <option value="Spindletop">Spindletop</option>
+                        <option value="Maritime History">Maritime History</option>
+                        <option value="Military History">Military History</option>
+                        <option value="Civil Rights">Civil Rights</option>
+                        <option value="Education">Education</option>
+                        <option value="Arts & Culture">Arts & Culture</option>
+                        <option value="Natural Disasters">Natural Disasters</option>
+                        <option value="Architecture">Architecture</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fact_title">Fact Title <span class="required">*</span></label>
+                    <input type="text" id="fact_title" name="fact_title" placeholder="e.g., First Oil Well in Texas" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="fact_content">Fact Content <span class="required">*</span></label>
+                    <textarea id="fact_content" name="fact_content" placeholder="Provide detailed information about this historical fact..." required></textarea>
+                    <div class="char-count"><span id="char-count">0</span> / 2000 characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="source">Source</label>
+                    <input type="text" id="source" name="source" placeholder="e.g., Texas Historical Association, Library of Congress">
+                </div>
+
+                <div class="form-group">
+                    <label for="contributor_name">Your Name (optional)</label>
+                    <input type="text" id="contributor_name" name="contributor_name" placeholder="Anonymous">
+                </div>
+
+                <button type="submit" class="submit-btn" id="submit-btn">Submit Contribution</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002';
+        const form = document.getElementById('contribution-form');
+        const charCount = document.getElementById('char-count');
+        const factContent = document.getElementById('fact_content');
+        const successMessage = document.getElementById('success-message');
+        const errorMessage = document.getElementById('error-message');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Character counter
+        factContent.addEventListener('input', () => {
+            const length = factContent.value.length;
+            charCount.textContent = length;
+
+            if (length > 2000) {
+                charCount.style.color = '#ff5252';
+            } else {
+                charCount.style.color = '#666';
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Hide previous messages
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            // Validate content length
+            if (factContent.value.length > 2000) {
+                showError('Fact content must be 2000 characters or less');
+                return;
+            }
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const formData = {
+                    topic: document.getElementById('topic').value,
+                    fact_title: document.getElementById('fact_title').value,
+                    fact_content: document.getElementById('fact_content').value,
+                    source: document.getElementById('source').value || 'Public contribution',
+                    contributor_name: document.getElementById('contributor_name').value || 'Anonymous'
+                };
+
+                const response = await fetch(`${API_BASE}/api/contribute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess(result.message);
+                    form.reset();
+                    charCount.textContent = '0';
+                } else {
+                    showError(result.error || 'Failed to submit contribution');
+                }
+            } catch (error) {
+                console.error('Error submitting contribution:', error);
+                showError('Network error. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Contribution';
+            }
+        });
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

@@ -4,7 +4,8 @@ const path = require('path');
 
 /**
  * Research Workflow Orchestrator
- * Coordinates topic research -> media collection -> presentation generation
+ * Coordinates topic research -> media collection -> data population
+ * Note: Presentations are internal processing artifacts used during data collection, not user-facing
  */
 class ResearchWorkflow {
     constructor(dbPath) {
@@ -18,11 +19,12 @@ class ResearchWorkflow {
      */
     extractTopic(message) {
         // Simple topic extraction - can be enhanced with NLP
+        // Order patterns from most specific to most general
         const patterns = [
+            /(spindletop|beaumont|port arthur|orange|lumber|oil|shipbuilding|cajun)/i,
             /tell me about (.*?)(\?|$)/i,
             /what (?:is|was|were) (.*?)(\?|$)/i,
-            /how did (.*?)(\?|$)/i,
-            /(spindletop|beaumont|port arthur|orange|lumber|oil|shipbuilding|cajun)/i
+            /how did (.*?)(\?|$)/i
         ];
 
         for (const pattern of patterns) {
@@ -72,13 +74,13 @@ class ResearchWorkflow {
         // Step 1: Research and collect media
         const research = await this.mediaAgent.researchAndCollect(topic, keywords);
 
-        // Step 2: Generate presentation
+        // Step 2: Generate presentation (internal artifact for data organization)
         const presentation = await this.presentationBuilder.generatePresentation(research.topicId);
 
         console.log(`✅ Workflow complete!`);
         console.log(`   - Topic ID: ${research.topicId}`);
         console.log(`   - Media collected: ${research.mediaCount}`);
-        console.log(`   - Presentation: ${presentation.filepath}`);
+        console.log(`   - Data organized and stored`);
 
         return {
             topicId: research.topicId,

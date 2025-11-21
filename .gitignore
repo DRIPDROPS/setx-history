@@ -4,3 +4,16 @@ node_modules/
 .env
 .DS_Store
 npm-debug.log*
+
+# Generated presentation files (these are created by the app, not source code)
+public/presentations/*.html
+
+# Generated images (these are downloaded by the media agent)
+public/images/historical/*.jpg
+public/images/historical/*.png
+
+# Server process files
+server.pid
+
+# Test results
+test-results/

@@ -162,6 +162,36 @@ function initializeHistoricalTables() {
 }
 
 /**
+ * Initialize additional tables for page consolidation
+ */
+function initializeConsolidationTables() {
+    return new Promise((resolve, reject) => {
+        db.serialize(() => {
+            // Consolidated pages tracking
+            db.run(`
+                CREATE TABLE IF NOT EXISTS consolidated_pages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    main_topic TEXT NOT NULL,
+                    display_name TEXT NOT NULL,
+                    html_path TEXT NOT NULL,
+                    presentation_count INTEGER DEFAULT 0,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            `, (err) => {
+                if (err) {
+                    console.error('Error creating consolidated_pages:', err);
+                    reject(err);
+                } else {
+                    console.log('✅ Table: consolidated_pages');
+                    resolve();
+                }
+            });
+        });
+    });
+}
+
+/**
  * Seed initial historical data
  */
 async function seedHistoricalData() {
@@ -239,17 +269,44 @@ async function seedHistoricalData() {
             periodStmt.finalize();
             console.log('✅ Seeded periods');
 
-            // Wait for city inserts to complete, then insert facts
-            setTimeout(() => {
-                // Get city and topic IDs for facts
-                db.get('SELECT id FROM historical_cities WHERE name = ?', ['Beaumont'], (err, beaumont) => {
-                    db.get('SELECT id FROM historical_cities WHERE name = ?', ['Port Arthur'], (err2, portArthur) => {
-                        db.get('SELECT id FROM historical_cities WHERE name = ?', ['Orange'], (err3, orange) => {
-                            db.get('SELECT id FROM historical_topics WHERE name = ?', ['Oil & Energy'], (err4, oilTopic) => {
-                                db.get('SELECT id FROM historical_topics WHERE name = ?', ['Lumber Industry'], (err5, lumberTopic) => {
-                                    db.get('SELECT id FROM historical_topics WHERE name = ?', ['Shipbuilding'], (err6, shipTopic) => {
+            // Get city and topic IDs for facts (using Promise.all for proper sequencing)
+            db.get('SELECT id FROM historical_cities WHERE name = ?', ['Beaumont'], (err, beaumont) => {
+                if (err) {
+                    console.error('Error fetching Beaumont:', err);
+                    return resolve();
+                }
+                
+                db.get('SELECT id FROM historical_cities WHERE name = ?', ['Port Arthur'], (err2, portArthur) => {
+                    if (err2) {
+                        console.error('Error fetching Port Arthur:', err2);
+                        return resolve();
+                    }
+                    
+                    db.get('SELECT id FROM historical_cities WHERE name = ?', ['Orange'], (err3, orange) => {
+                        if (err3) {
+                            console.error('Error fetching Orange:', err3);
+                            return resolve();
+                        }
+                        
+                        db.get('SELECT id FROM historical_topics WHERE name = ?', ['Oil & Energy'], (err4, oilTopic) => {
+                            if (err4) {
+                                console.error('Error fetching Oil & Energy topic:', err4);
+                                return resolve();
+                            }
+                            
+                            db.get('SELECT id FROM historical_topics WHERE name = ?', ['Lumber Industry'], (err5, lumberTopic) => {
+                                if (err5) {
+                                    console.error('Error fetching Lumber Industry topic:', err5);
+                                    return resolve();
+                                }
+                                
+                                db.get('SELECT id FROM historical_topics WHERE name = ?', ['Shipbuilding'], (err6, shipTopic) => {
+                                    if (err6) {
+                                        console.error('Error fetching Shipbuilding topic:', err6);
+                                        return resolve();
+                                    }
 
-                                        const facts = [
+                                    const facts = [
                                             {
                                                 title: 'Spindletop Oil Gusher Erupts',
                                                 content: 'On January 10, 1901, at Spindletop Hill near Beaumont, the Lucas Gusher erupted, shooting oil over 100 feet into the air. The well flowed an estimated 100,000 barrels per day for nine days before being capped. This discovery launched the modern petroleum industry and transformed Texas from a rural agricultural state into an industrial powerhouse. Major companies including Texaco, Gulf Oil, and Humble (later Exxon) were born from this strike.',
@@ -344,17 +401,20 @@ async function seedHistoricalData() {
                                             );
                                         });
 
-                                        factStmt.finalize(() => {
+                                    factStmt.finalize((finalizeErr) => {
+                                        if (finalizeErr) {
+                                            console.error('Error finalizing fact statement:', finalizeErr);
+                                        } else {
                                             console.log('✅ Seeded historical facts');
-                                            resolve();
-                                        });
+                                        }
+                                        resolve();
                                     });
                                 });
                             });
                         });
                     });
                 });
-            }, 500);
+            });
         });
     });
 }
@@ -374,8 +434,24 @@ if (require.main === module) {
         });
 }
 
-module.exports = {
-    initializeHistoricalTables,
-    seedHistoricalData,
-    db
+/**
+ * Initialize all database tables
+ * Creates comprehensive schema for Southeast Texas historical data including consolidation tables
+ */
+async function initializeAllTables() {
+    try {
+        await initializeHistoricalTables();
+        await initializeConsolidationTables();
+        console.log('✅ All database tables initialized');
+    } catch (error) {
+        console.error('❌ Error initializing database tables:', error);
+        throw error;
+    }
+}
+
+module.exports = { 
+    initializeHistoricalTables, 
+    initializeConsolidationTables,
+    initializeAllTables,
+    seedHistoricalData 
 };
