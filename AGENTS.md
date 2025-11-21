@@ -42,3 +42,39 @@ The system now automatically consolidates related research presentations into co
 5. **Source Preservation**: All consolidated pages maintain proper attribution to original sources
 
 Example consolidated pages have been created in `/public/presentations/` with tabbed interfaces for browsing related content.
+
+### Interactive Page Enhancement
+
+Each presentation page now includes an interactive enhancement widget that allows users to expand the page with new research:
+
+1. **Enhancement Widget**: Located on every presentation page with:
+   - Text input for asking questions about the current topic
+   - "Research & Add" button to trigger research
+   - Live status updates during research
+   - Example questions tailored to the current page
+   
+2. **API Endpoint**: `POST /api/enhance-page`
+   ```json
+   {
+     "topicId": 123,
+     "topicName": "Beaumont",
+     "query": "What were the major buildings in Beaumont during the oil boom?"
+   }
+   ```
+
+3. **Workflow**:
+   - User asks a question on the page (e.g., "Tell me about historical buildings in Beaumont")
+   - System researches the query in the context of the current page
+   - New facts and media are added to the existing topic
+   - Page automatically regenerates and reloads with new content
+   
+4. **Features**:
+   - Context-aware: Questions are automatically scoped to the current topic
+   - Incremental: Adds to existing content without replacing it
+   - Source-attributed: All new content maintains proper citations
+   - Real-time feedback: Shows research progress and results
+
+**Example Usage**:
+- On the "Beaumont" page, ask: "What were the important buildings during the oil boom?"
+- On the "Oil & Energy" page, ask: "Who were the key people in the Texas oil industry?"
+- On any city page, ask: "Tell me about the architecture" or "What happened during World War II?"

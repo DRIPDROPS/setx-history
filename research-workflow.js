@@ -56,8 +56,10 @@ class ResearchWorkflow {
 
     /**
      * Full research workflow
+     * @param {string} userMessage - The user's query
+     * @param {number} existingTopicId - Optional: If provided, enhances existing topic instead of creating new one
      */
-    async processUserQuery(userMessage) {
+    async processUserQuery(userMessage, existingTopicId = null) {
         console.log('\n🔬 Research Workflow Starting...');
 
         const topic = this.extractTopic(userMessage);
@@ -72,7 +74,7 @@ class ResearchWorkflow {
         console.log(`🔑 Keywords: ${keywords.join(', ')}`);
 
         // Step 1: Research and collect media
-        const research = await this.mediaAgent.researchAndCollect(topic, keywords);
+        const research = await this.mediaAgent.researchAndCollect(topic, keywords, existingTopicId);
 
         // Step 2: Generate presentation (internal artifact for data organization)
         const presentation = await this.presentationBuilder.generatePresentation(research.topicId);

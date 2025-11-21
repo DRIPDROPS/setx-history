@@ -41,6 +41,59 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Enhance existing page with new research
+app.post('/api/enhance-page', async (req, res) => {
+    const { topicId, topicName, query } = req.body;
+    
+    if (!topicId || !query) {
+        return res.status(400).json({ 
+            success: false, 
+            error: 'Missing topicId or query' 
+        });
+    }
+    
+    console.log(`🔬 Enhancing page for topic "${topicName}" with query: "${query}"`);
+    
+    try {
+        const workflow = new ResearchWorkflow(dbPath);
+        
+        // Construct contextual query
+        const contextualQuery = `${query} (related to ${topicName} in Southeast Texas history)`;
+        
+        // Process the enhancement query
+        const result = await workflow.processUserQuery(contextualQuery, topicId);
+        workflow.close();
+        
+        if (result && result.factsAdded > 0) {
+            // Regenerate the presentation with new content
+            const { PresentationBuilder } = require('./presentation-builder');
+            const builder = new PresentationBuilder(dbPath);
+            await builder.generatePresentation(topicId);
+            builder.close();
+            
+            console.log(`✅ Page enhanced with ${result.factsAdded} new facts`);
+            
+            res.json({
+                success: true,
+                message: `Added ${result.factsAdded} new facts to the page`,
+                factsAdded: result.factsAdded,
+                topicId: result.topicId
+            });
+        } else {
+            res.json({
+                success: false,
+                error: 'No new content found for this query. Try rephrasing or asking about a different aspect.'
+            });
+        }
+    } catch (error) {
+        console.error('❌ Page enhancement error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to enhance page'
+        });
+    }
+});
+
 // Get all cities
 app.get('/api/cities', (req, res) => {
     db.all('SELECT * FROM historical_cities ORDER BY name ASC', [], (err, rows) => {

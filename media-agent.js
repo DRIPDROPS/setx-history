@@ -279,27 +279,39 @@ class MediaAgent {
 
     /**
      * Full workflow: Research topic -> Collect media -> Store everything
+     * @param {string} topic - The topic to research
+     * @param {array} keywords - Keywords for the search
+     * @param {number} existingTopicId - Optional: If provided, enhances existing topic instead of creating new one
      */
-    async researchAndCollect(topic, keywords = []) {
+    async researchAndCollect(topic, keywords = [], existingTopicId = null) {
         console.log(`\n🔬 Starting research workflow for: "${topic}"`);
 
-        // 1. Store researched topic
-        const topicId = await this.storeResearchedTopic(topic, keywords);
-        console.log(`✅ Stored topic research (ID: ${topicId})`);
+        let topicId = existingTopicId;
+        
+        if (!existingTopicId) {
+            // 1. Store researched topic (only if not enhancing existing)
+            topicId = await this.storeResearchedTopic(topic, keywords);
+            console.log(`✅ Stored topic research (ID: ${topicId})`);
+        } else {
+            console.log(`🔄 Enhancing existing topic (ID: ${topicId})`);
+        }
 
         // 2. Collect media
         const media = await this.collectMediaForTopic(topic, keywords);
 
         // 3. Link media to topic
+        let factsAdded = 0;
         for (const item of media) {
             await this.linkMediaToTopic(topicId, item.filepath, item.title, item.source);
+            factsAdded++;
         }
 
         return {
             topicId,
             topic,
             mediaCount: media.length,
-            media
+            media,
+            factsAdded
         };
     }
 

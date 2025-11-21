@@ -253,6 +253,103 @@ class PresentationBuilder {
         #save-notes:hover {
             background: #1e3c72;
         }
+        .enhance-section {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            border: 2px solid #2a5298;
+        }
+        .enhance-section h2 {
+            color: #1e3c72;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .enhance-section .subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+        .enhance-form {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        #enhance-query {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        #enhance-query:focus {
+            outline: none;
+            border-color: #2a5298;
+        }
+        #enhance-button {
+            padding: 1rem 2rem;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        #enhance-button:hover:not(:disabled) {
+            background: #1e3c72;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(42, 82, 152, 0.3);
+        }
+        #enhance-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .enhance-status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+        .enhance-status.loading {
+            display: block;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+        .enhance-status.success {
+            display: block;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left: 4px solid #4caf50;
+        }
+        .enhance-status.error {
+            display: block;
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #f44336;
+        }
+        .enhance-examples {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+        .enhance-examples strong {
+            color: #1e3c72;
+        }
+        .enhance-examples .example {
+            color: #666;
+            margin-left: 1rem;
+            display: block;
+            margin-top: 0.25rem;
+        }
         .timestamp {
             text-align: center;
             padding: 2rem;
@@ -300,6 +397,26 @@ class PresentationBuilder {
                 </div>
             `).join('')}
 
+            <div class="enhance-section">
+                <h2>🔬 Enhance This Page</h2>
+                <p class="subtitle">Ask a question about ${topic.topic} to add more content to this page</p>
+                <div class="enhance-form">
+                    <input type="text" 
+                           id="enhance-query" 
+                           placeholder="e.g., What were the major buildings in Beaumont during the oil boom?"
+                           data-topic-id="${topicId}"
+                           data-topic-name="${topic.topic}">
+                    <button id="enhance-button">🚀 Research & Add</button>
+                </div>
+                <div id="enhance-status" class="enhance-status"></div>
+                <div class="enhance-examples">
+                    <strong>Example questions:</strong>
+                    <span class="example">• "Tell me about historical buildings in ${topic.topic.replace(/\s+in\s+southeast\s+texas\s+history/gi, '').trim()}"</span>
+                    <span class="example">• "What were the major events in ${topic.topic.replace(/\s+in\s+southeast\s+texas\s+history/gi, '').trim()} during the 1900s?"</span>
+                    <span class="example">• "Who were important people in ${topic.topic.replace(/\s+in\s+southeast\s+texas\s+history/gi, '').trim()}?"</span>
+                </div>
+            </div>
+
             <div class="notes-section">
                 <h2>My Notes</h2>
                 <p>Add your personal notes and research findings below.</p>
@@ -312,6 +429,71 @@ class PresentationBuilder {
             Generated: ${new Date().toLocaleString()}
         </div>
     </div>
+    
+    <script>
+        const API_BASE = window.location.origin.includes('localhost') ? 'http://localhost:3002' : '';
+        
+        // Enhancement functionality
+        const enhanceButton = document.getElementById('enhance-button');
+        const enhanceQuery = document.getElementById('enhance-query');
+        const enhanceStatus = document.getElementById('enhance-status');
+        
+        enhanceButton.addEventListener('click', async () => {
+            const query = enhanceQuery.value.trim();
+            if (!query) {
+                showStatus('Please enter a question', 'error');
+                return;
+            }
+            
+            const topicId = enhanceQuery.dataset.topicId;
+            const topicName = enhanceQuery.dataset.topicName;
+            
+            enhanceButton.disabled = true;
+            enhanceButton.textContent = '⏳ Researching...';
+            showStatus('Researching and adding new content to this page...', 'loading');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/enhance-page`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        topicId, 
+                        topicName,
+                        query 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showStatus(`✅ Success! Added ${result.factsAdded || 0} new facts. Reloading page...`, 'success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showStatus(`❌ Error: ${result.error || 'Failed to enhance page'}`, 'error');
+                    enhanceButton.disabled = false;
+                    enhanceButton.textContent = '🚀 Research & Add';
+                }
+            } catch (error) {
+                console.error('Enhancement error:', error);
+                showStatus(`❌ Network error: ${error.message}`, 'error');
+                enhanceButton.disabled = false;
+                enhanceButton.textContent = '🚀 Research & Add';
+            }
+        });
+        
+        enhanceQuery.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                enhanceButton.click();
+            }
+        });
+        
+        function showStatus(message, type) {
+            enhanceStatus.textContent = message;
+            enhanceStatus.className = `enhance-status ${type}`;
+        }
+    </script>
 </body>
 </html>
         `;
